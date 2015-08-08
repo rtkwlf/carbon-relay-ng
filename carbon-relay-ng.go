@@ -5,7 +5,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"expvar"
 	"flag"
 	"fmt"
@@ -19,7 +18,6 @@ import (
 	"github.com/graphite-ng/carbon-relay-ng/_third_party/github.com/BurntSushi/toml"
 	"github.com/graphite-ng/carbon-relay-ng/_third_party/github.com/Dieterbe/go-metrics"
 	"github.com/graphite-ng/carbon-relay-ng/_third_party/github.com/Dieterbe/go-metrics/exp"
-	m20 "github.com/graphite-ng/carbon-relay-ng/_third_party/github.com/metrics20/go-metrics20"
 	logging "github.com/graphite-ng/carbon-relay-ng/_third_party/github.com/op/go-logging"
 	"github.com/graphite-ng/carbon-relay-ng/_third_party/github.com/rcrowley/goagain"
 	"github.com/graphite-ng/carbon-relay-ng/badmetrics"
@@ -110,18 +108,6 @@ func handle(c *net.TCPConn, config Config) {
 		buf_copy := make([]byte, len(buf), len(buf))
 		copy(buf_copy, buf)
 		numIn.Inc(1)
-
-		err = m20.ValidatePacket(buf)
-		if err != nil {
-			fields := bytes.Fields(buf)
-			if len(fields) != 0 {
-				badMetrics.Add(fields[0], buf, err)
-			} else {
-				badMetrics.Add(emptyByteStr, buf, err)
-			}
-			numInvalid.Inc(1)
-			continue
-		}
 
 		table.Dispatch(buf_copy)
 	}
