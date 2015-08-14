@@ -18,7 +18,8 @@ type Destination struct {
 	lockMatcher sync.Mutex
 	Matcher     Matcher `json:"matcher"`
 
-	Addr         string `json:"address"` // tcp dest
+	Addr         string `json:"address"`  // tcp dest
+	Instance     string `json:"instance"` // Optional carbon instance name, useful only with consistent hashing
 	spoolDir     string // where to store spool files (if enabled)
 	Spool        bool   `json:"spool"`        // spool metrics to disk while dest down?
 	Pickle       bool   `json:"pickle"`       // send in pickle format?
@@ -50,10 +51,18 @@ func NewDestination(prefix, sub, regex, addr, spoolDir string, spool, pickle boo
 	if err != nil {
 		return nil, err
 	}
+	var instance string
+	// The address may be specified as server:port or server:port:instance.
+	addrComponents := strings.Split(addr, ":")
+	if len(addrComponents) == 3 {
+		instance = addrComponents[2]
+	}
+	addr = strings.Join(addrComponents[0:2], ":")
 	cleanAddr := addrToPath(addr)
 	dest := &Destination{
 		Matcher:      *m,
 		Addr:         addr,
+		Instance:     instance,
 		spoolDir:     spoolDir,
 		Spool:        spool,
 		Pickle:       pickle,

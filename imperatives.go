@@ -16,6 +16,7 @@ const (
 	addAgg
 	addRouteSendAllMatch
 	addRouteSendFirstMatch
+	addRouteConsistentHashing
 	addDest
 	modDest
 	modRoute
@@ -32,6 +33,7 @@ var tokenDefGlobal = []toki.Def{
 	{Token: addAgg, Pattern: "addAgg .*"},
 	{Token: addRouteSendAllMatch, Pattern: "addRoute sendAllMatch [a-z-_]+"},
 	{Token: addRouteSendFirstMatch, Pattern: "addRoute sendFirstMatch [a-z-_]+"},
+	{Token: addRouteConsistentHashing, Pattern: "addRoute consistentHashing [a-z-_]+"},
 	{Token: addDest, Pattern: "addDest [a-z-_]+"},
 	{Token: modDest, Pattern: "modDest .*"},
 	{Token: modRoute, Pattern: "modRoute .*"},
@@ -241,6 +243,22 @@ func applyCommand(table *Table, cmd string) error {
 			return err
 		}
 		route, err := NewRouteSendFirstMatch(key, prefix, sub, regex, destinations)
+		if err != nil {
+			return err
+		}
+		table.AddRoute(route)
+	} else if t.Token == addRouteConsistentHashing {
+		split := strings.Split(string(t.Value), " ")
+		key := split[2]
+		if len(inputs) < 3 {
+			return fmt.Errorf("must get at least 2 destinations for consistent hashing route '%s'", key)
+		}
+
+		destinations, err := readDestinations(inputs[1:], table)
+		if err != nil {
+			return err
+		}
+		route, err := NewRouteConsistentHashing(key, destinations)
 		if err != nil {
 			return err
 		}
